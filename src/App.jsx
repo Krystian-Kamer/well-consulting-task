@@ -15,23 +15,10 @@ import {
   AppointmentForm,
   AppointmentTooltip,
 } from '@devexpress/dx-react-scheduler-material-ui';
-import { app } from '../src/firebaseConfing';
-import { getDatabase, ref, set, push, get, remove } from 'firebase/database';
 import { useState, useEffect } from 'react';
+import { fetchSchedulerData, updateDatabase } from './firebaseUtils';
 
 const currentDate = new Date();
-const db = getDatabase(app);
-
-const fetchSchedulerData = async () => {
-  const dbRef = ref(db, 'activities');
-  const snapshot = await get(dbRef);
-  if (snapshot.exists()) {
-    const schedulerData = Object.values(snapshot.val()).flat();
-    return schedulerData;
-  } else {
-    return [];
-  }
-};
 
 const App = () => {
   const [activities, setActivities] = useState([]);
@@ -55,7 +42,7 @@ const App = () => {
 
   const commitChanges = ({ added, changed, deleted }) => {
     const newActivities = [...activities];
-    const newDocRef = push(ref(db, 'activities'));
+
     if (added) {
       const startingAddedId =
         newActivities.length > 0
@@ -68,9 +55,7 @@ const App = () => {
         startDate: new Date(added.startDate).toString(),
       };
       const updatedActivities = [...newActivities, activity];
-      const dbRef = ref(db, 'activities');
-      remove(dbRef);
-      set(newDocRef, updatedActivities);
+      updateDatabase(updatedActivities);
       setActivities(updatedActivities);
     }
 
@@ -95,9 +80,7 @@ const App = () => {
             }
           : activity
       );
-      const dbRef = ref(db, 'activities');
-      remove(dbRef);
-      set(newDocRef, updatedActivities);
+      updateDatabase(updatedActivities);
       setActivities(updatedActivities);
     }
     if (deleted !== undefined) {
@@ -107,9 +90,7 @@ const App = () => {
           ...activity,
           id: index + 1,
         }));
-      const dbRef = ref(db, 'activities');
-      remove(dbRef);
-      set(newDocRef, updatedActivities);
+      updateDatabase(updatedActivities);
       setActivities(updatedActivities);
     }
   };
